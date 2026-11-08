@@ -1,0 +1,6 @@
+html, body { margin: 0; height: 100%; background: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1a2b24; }
+.qr-display main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; padding: 3vh; box-sizing: border-box; }
+.qr-place { margin: 0; font-size: clamp(18px, 4vh, 40px); font-weight: 700; color: var(--accent, #3c7460); }
+#qr { width: min(80vw, 70vh); aspect-ratio: 1; }
+#qr svg { width: 100%; height: 100%; display: block; }
+.qr-help { margin: 0; font-size: clamp(14px, 2.6vh, 26px); }

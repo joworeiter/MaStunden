@@ -5,7 +5,7 @@ ini_set('display_errors','0');
 if(!is_file(__DIR__.'/config.php')){header('Location: install.php');exit;}
 $config=require __DIR__.'/config.php';
 if(isset($config['storage_guard_sha256'])&&(!is_file($config['storage'].'/.htaccess')||!hash_equals($config['storage_guard_sha256'],hash_file('sha256',$config['storage'].'/.htaccess')))){http_response_code(503);exit('Der Speicherschutz fehlt oder wurde verändert. Bitte den Administrator kontaktieren.');}
-require_once __DIR__.'/lib/core.php';require_once __DIR__.'/lib/time.php';require_once __DIR__.'/lib/admin.php';require_once __DIR__.'/lib/actions.php';require_once __DIR__.'/lib/backup.php';require_once __DIR__.'/lib/layout.php';require_once __DIR__.'/lib/admin_views.php';require_once __DIR__.'/lib/reports.php';
+require_once __DIR__.'/lib/core.php';require_once __DIR__.'/lib/time.php';require_once __DIR__.'/lib/admin.php';require_once __DIR__.'/lib/actions.php';require_once __DIR__.'/lib/backup.php';require_once __DIR__.'/lib/layout.php';require_once __DIR__.'/lib/admin_views.php';require_once __DIR__.'/lib/reports.php';require_once __DIR__.'/lib/qr.php';
 $secure=!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off';$local=getenv('MASTUNDEN_LOCAL_TEST')==='1'||in_array($_SERVER['REMOTE_ADDR']??'',['127.0.0.1','::1'],true);
 if(!$secure&&!$local){http_response_code(403);exit('MaStunden benötigt HTTPS. Bitte mit https:// aufrufen. Bei einem vorgeschalteten Proxy muss der Hoster HTTPS korrekt an PHP melden.');}
 header('X-Content-Type-Options: nosniff');header('X-Frame-Options: DENY');header('Referrer-Policy: same-origin');header('Permissions-Policy: camera=(), microphone=(), geolocation=()');header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");header('Cache-Control: no-store');if($secure)header('Strict-Transport-Security: max-age=31536000');
@@ -18,6 +18,8 @@ try {
  if(isset($_SESSION['uid'])){$u=user();if(!$u||($_SESSION['password_sig']??'')!==hash('sha256',$u['password'])||($_SESSION['epoch']??'')!==setting('session_epoch')||time()-($_SESSION['last_activity']??0)>3600){unset($_SESSION['uid']);}else $_SESSION['last_activity']=time();}
  if(isset($_GET['theme'])){header('Content-Type: text/css');$color=setting('color','#117a82');if(!preg_match('/^#[a-f0-9]{6}$/i',$color))$color='#117a82';echo ':root{--accent:'.$color.'}';exit;}
  if(isset($_GET['asset'])){$kind=(string)$_GET['asset'];if(!in_array($kind,['company_logo'],true))fail('Unbekanntes Logo.');$name=setting($kind);if(!$name||!is_file(storage_path($name))){http_response_code(404);exit;}header('Content-Type: image/png');readfile(storage_path($name));exit;}
+ if(isset($_GET['qr_display'])&&$_SERVER['REQUEST_METHOD']==='GET')qr_display((string)$_GET['qr_display'],(string)($_GET['k']??''));
+ if(isset($_GET['qr'])&&$_SERVER['REQUEST_METHOD']==='GET'){qr_accept((string)$_GET['qr']);go('index.php');}
  if($_SERVER['REQUEST_METHOD']==='POST'){
   if((int)($_SERVER['CONTENT_LENGTH']??0)>limits_bytes((string)ini_get('post_max_size'))&&limits_bytes((string)ini_get('post_max_size'))>0)fail('Die Anfrage überschreitet das PHP-Uploadlimit. Kleinere Datei wählen oder Backup per FTP im privaten Ordner bereitstellen.');csrf_check();$a=post('action');
   if($a==='logout'){$_SESSION=[];session_regenerate_id(true);go();}
