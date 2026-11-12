@@ -25,3 +25,4 @@ input,select{height:46px;min-width:0}select{appearance:none;padding-right:38px;b
 .qr-hint.ok{background:#e8efe9;color:#2f5c4c;font-weight:600}
 .qr-links{padding-left:1.1rem}.qr-links li{margin:.5rem 0}.qr-links code{word-break:break-all;font-size:.85rem}
 label.check{display:flex;gap:.5rem;align-items:center}
+.badge.offsite{background:#fbeee0;color:#8a4b12;margin-left:.4rem}

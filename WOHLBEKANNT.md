@@ -8,12 +8,15 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 | MariaDB | Installer erlaubt MariaDB ab 10.6 (All-Inkl hat kein MySQL 8) |
 | Wochensoll | Arbeitszeitmodell als „Soll pro Woche“, minutengenau auf Mo–So verteilt (Wochensumme exakt) |
 | QR-Stempeln | Rotierender QR-Code am Lokal-Bildschirm. Ohne frischen Scan kein „Arbeit starten/beenden“. Der Standort wird im Eintrag vermerkt. |
+| Außer Haus | Pro Mitarbeiter erlaubbar: Stempeln ohne QR, Arbeitsblock wird als „Außer Haus“ gekennzeichnet (Übersicht, Eintrag, Monatszettel, PDF, CSV). Stempel-Vermerke kann nur ein Admin ändern. |
 
 ## QR-Stempeln
 
 - Aktivieren unter **Unternehmen → QR-Stempeln**. Dort werden Standorte gepflegt und die Bildschirm-Links angezeigt.
 - Der Bildschirm-Link (`index.php?qr_display=…&k=…`) zeigt einen QR-Code, der alle 30 s wechselt. Er lässt sich einbetten, z. B. als Home-Assistant-Webseiten-Karte (`type: iframe`). Der Link ist geheim; mit „Neuen QR-Schlüssel erzeugen“ werden alle alten Links ungültig.
 - Mitarbeiter scannen mit der Handy-Kamera. Danach dürfen sie 5 Minuten lang kommen bzw. gehen. Codes älter als 90 s werden abgelehnt.
+- **Außer Haus:** Unter Mitarbeiter → Bearbeiten → „Stempeln außer Haus“ pro Person erlauben (mit Begründung, steht im Änderungsprotokoll). Diese Person kann dann ohne Scan stempeln; der Block wird als „Außer Haus“ markiert. Mit Scan wird normal der Standort vermerkt.
+- Die Vermerke „per QR“ und „außer Haus“ in der Bemerkung sind geschützt: Mitarbeiter können sie beim Bearbeiten weder entfernen noch selbst eintragen.
 - Ausgenommen: Administratoren, Pausen, Nachträge und Korrekturen (diese stehen im Änderungsprotokoll und werden beim Monatsabschluss geprüft).
 - iPhone: den Link als Lesezeichen in Safari verwenden, nicht als Home-Bildschirm-App. Die App hat einen eigenen Login, beim Scannen öffnet sich aber Safari.
 - Grenze: Wer den Code vor Ort abfotografiert und sofort weiterschickt, kann ihn 90 s lang nutzen.

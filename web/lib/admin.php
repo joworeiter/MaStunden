@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/user_delete.php';
 function admin_action(string $a,int $uid): void {
  require_admin();switch($a){
- case 'qr_settings':case 'qr_rotate':qr_admin_action($a);break;
+ case 'qr_settings':case 'qr_rotate':case 'qr_offsite':qr_admin_action($a);break;
  case 'user_delete': delete_employee((int)post('id'));break;
  case 'user_save':
   $id=(int)post('id','0');$old=$id?one('users','id=?',[$id]):null;if($id&&!$old)fail('Benutzer nicht gefunden.');$email=strtolower(post('email'));if(!filter_var($email,FILTER_VALIDATE_EMAIL))fail('Ungültige E-Mail-Adresse.');$role=post('role');if(!in_array($role,['admin','employee'],true))fail('Ungültige Rolle.');$active=isset($_POST['active'])?1:0;

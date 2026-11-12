@@ -5,6 +5,8 @@ declare(strict_types=1);
  * Ein Bildschirm im Lokal (z. B. Home-Assistant-Dashboard) zeigt einen QR-Code, der alle 30 Sekunden wechselt.
  * Wer ihn mit dem Handy scannt, darf in den nächsten 5 Minuten "Arbeit starten" bzw. "Arbeit beenden".
  * Der Standort wird in der Bemerkung des Arbeitsblocks vermerkt. Nachträge und Korrekturen bleiben ohne QR möglich.
+ * Pro Mitarbeiter kann "Stempeln außer Haus" erlaubt werden: dann geht Kommen/Gehen auch ohne Scan,
+ * der Arbeitsblock wird aber als "Außer Haus" gekennzeichnet (Übersicht, Monatszettel, PDF, CSV).
  */
 const QR_STEP = 30;   // Sekunden je Code
 const QR_GRACE = 3;   // akzeptierte Code-Generationen (bis 90 Sekunden alt)
@@ -53,15 +55,26 @@ function qr_valid_scan(): ?string {
 
 /** Vor "Arbeit starten"/"Arbeit beenden": gültigen Scan verlangen (Administratoren ausgenommen). */
 function qr_require(): void {
-    if (!qr_enabled() || admin()) return;
-    if (!qr_valid_scan()) fail('Zum Kommen und Gehen bitte zuerst den QR-Code im Lokal scannen.');
+    if (!qr_enabled() || admin() || qr_valid_scan() || qr_offsite_allowed((int)user()['id'])) return;
+    fail('Zum Kommen und Gehen bitte zuerst den QR-Code im Lokal scannen.');
 }
+
+/** Mitarbeiter, die ohne Scan stempeln dürfen (Einträge werden als "Außer Haus" markiert). */
+function qr_offsite_users(): array { return array_values(array_filter(array_map('intval', explode(',', setting('qr_offsite_users'))))); }
+function qr_offsite_allowed(int $uid): bool { return in_array($uid, qr_offsite_users(), true); }
+
+/** Kennzeichnung eines Arbeitsblocks anhand der Bemerkung. */
+function qr_is_offsite(?string $note): bool { return $note !== null && preg_match('/(Kommen|Gehen) außer Haus \(\d{2}:\d{2}\)/u', $note) === 1; }
+function qr_block_suffix(?string $note): string { return qr_is_offsite($note) ? ' (Außer Haus)' : ''; }
 
 /** Standortvermerk für die Bemerkung; der Scan wird dabei verbraucht. */
 function qr_note(string $what): string {
     $loc = qr_valid_scan();
     unset($_SESSION['qr_loc'], $_SESSION['qr_until']);
-    return $loc ? $what . ' per QR: ' . qr_locations()[$loc] . ' (' . local_time(now(), 'H:i') . ')' : '';
+    $time = ' (' . local_time(now(), 'H:i') . ')';
+    if ($loc) return $what . ' per QR: ' . qr_locations()[$loc] . $time;
+    if (qr_enabled() && !admin() && qr_offsite_allowed((int)user()['id'])) return $what . ' außer Haus' . $time;
+    return '';
 }
 
 function qr_dashboard_hint(): string {
@@ -69,6 +82,7 @@ function qr_dashboard_hint(): string {
     $loc = qr_valid_scan();
     if ($loc) return '<p class="qr-hint ok">✓ QR-Code erkannt: ' . h(qr_locations()[$loc]) . ' – jetzt stempeln.</p>';
     if (admin()) return '<p class="qr-hint">QR-Stempeln ist aktiv (für Administratoren nicht erforderlich).</p>';
+    if (qr_offsite_allowed((int)user()['id'])) return '<p class="qr-hint">Im Lokal bitte den QR-Code scannen. Ohne Scan wird der Eintrag als „Außer Haus“ gekennzeichnet.</p>';
     return '<p class="qr-hint">Zum Kommen und Gehen zuerst den QR-Code im Lokal scannen.</p>';
 }
 
@@ -92,6 +106,17 @@ function qr_display(string $loc, string $key): never {
 
 function qr_admin_action(string $a): void {
     require_admin();
+    if ($a === 'qr_offsite') {
+        $uid = (int)post('user_id');
+        if (!one('users', 'id=?', [$uid])) fail('Mitarbeiter nicht gefunden.');
+        $before = qr_offsite_users();
+        $ids = array_values(array_diff($before, [$uid]));
+        if (post('qr_offsite') === '1') $ids[] = $uid;
+        sort($ids);
+        set_setting('qr_offsite_users', implode(',', $ids));
+        audit('qr_offsite', 'users', $uid, ['qr_offsite' => in_array($uid, $before, true)], ['qr_offsite' => in_array($uid, $ids, true)], require_reason());
+        return;
+    }
     if ($a === 'qr_rotate') {
         set_setting('qr_secret', bin2hex(random_bytes(32)));
         audit('qr_rotate', 'settings', null, null, null, 'QR-Schlüssel neu erzeugt');
@@ -130,4 +155,24 @@ function qr_settings_view(): void {
         submit('Neuen QR-Schlüssel erzeugen', 'secondary');
     }
     echo '</section>';
+}
+
+function qr_user_view(int $uid): void {
+    $on = qr_offsite_allowed($uid);
+    echo '<section class="card"><h2>Stempeln außer Haus</h2><p class="muted">Erlaubt Kommen und Gehen ohne QR-Scan, z. B. für Bar-Bike-Einsätze oder Arbeit außerhalb der Lokale. Solche Arbeitsblöcke werden in Übersicht, Monatszettel, PDF und CSV als „Außer Haus“ gekennzeichnet.' . (qr_enabled() ? '' : ' Wirkt erst, wenn unter Unternehmen das QR-Stempeln aktiviert ist.') . '</p>';
+    form_start('qr_offsite', ['user_id' => $uid]);
+    echo '<label class="check"><input type="checkbox" name="qr_offsite" value="1" ' . ($on ? 'checked' : '') . '> Stempeln ohne QR erlauben (als „Außer Haus“ markieren)</label>';
+    textarea('Begründung', 'reason', '', true);
+    submit('Speichern');
+    echo '</section>';
+}
+
+/** Stempel-Vermerke (QR/Außer Haus) sind nur für Administratoren änderbar: Mitarbeiter können sie weder entfernen noch selbst eintragen. */
+function qr_protect_note(?array $old, string $note): string {
+    if (admin()) return $note;
+    $pattern = '/\s*·?\s*(Kommen|Gehen) (per QR: [^()·]{1,80}|außer Haus) \(\d{2}:\d{2}\)\s*·?/u';
+    $clean = trim((string)preg_replace($pattern, ' ', $note));
+    preg_match_all('/(Kommen|Gehen) (per QR: [^()·]{1,80}|außer Haus) \(\d{2}:\d{2}\)/u', (string)($old['note'] ?? ''), $m);
+    $marks = implode(' · ', $m[0]);
+    return trim($marks . ($marks !== '' && $clean !== '' ? ' · ' : '') . $clean);
 }
