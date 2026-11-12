@@ -9,6 +9,8 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 | Wochensoll | Arbeitszeitmodell als „Soll pro Woche“, minutengenau auf Mo–So verteilt (Wochensumme exakt) |
 | QR-Stempeln | Rotierender QR-Code am Lokal-Bildschirm. Ohne frischen Scan kein „Arbeit starten/beenden“. Der Standort wird im Eintrag vermerkt. |
 | Außer Haus | Pro Mitarbeiter erlaubbar: Stempeln ohne QR, Arbeitsblock wird als „Außer Haus“ gekennzeichnet (Übersicht, Eintrag, Monatszettel, PDF, CSV). Stempel-Vermerke kann nur ein Admin ändern. |
+| Formular | „Arbeitszeit nachtragen“ behält die Eingaben nach einem Fehler |
+| Stundenübersicht | Admin-Ansicht (Verwaltung → Stundenübersicht): alle Mitarbeiter mit Wochensoll, Saldo bis gestern / inkl. heute, Resturlaub, Status |
 
 ## QR-Stempeln
 
