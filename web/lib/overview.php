@@ -13,6 +13,7 @@ function overview_rows(bool $inactive): array {
     $out = [];
     foreach (rows('users', $inactive ? '1' : 'active=1', [], 'ORDER BY name') as $u) {
         $uid = (int)$u['id'];
+        if (!$inactive && in_array($uid, own_time_hidden_users(), true)) continue;
         $started = $u['employment_start'] <= today();
         $vac = vacation($uid, $year);
         $open = one('entries', 'user_id=? AND end_at IS NULL', [$uid]);
@@ -55,4 +56,26 @@ function view_overview(): void {
             . '<td><a href="index.php?page=times&user=' . $uid . '">Zeiten</a> · <a href="index.php?page=reports&user=' . $uid . '">Monatszettel</a></td></tr>';
     }
     echo '</tbody></table></div><p class="muted">„Saldo bis gestern“ enthält alle abgeschlossenen Tage inkl. Korrekturbuchungen. „inkl. heute“ rechnet das heutige Soll und die heute schon erfassten Zeiten mit ein (entspricht dem Stundenkonto, das der Mitarbeiter selbst sieht).</p></section>';
+}
+
+/* Administratoren ohne eigene Zeiterfassung (Mein Konto → "Eigene Zeiterfassung ausblenden"). */
+function own_time_hidden_users(): array { return array_values(array_filter(array_map('intval', explode(',', setting('hide_own_time'))))); }
+function own_time_hidden(): bool { return admin() && in_array((int)user()['id'], own_time_hidden_users(), true); }
+
+function own_time_action(): void {
+    $uid = (int)user()['id'];
+    $ids = array_values(array_diff(own_time_hidden_users(), [$uid]));
+    if (post('hide_own_time') === '1') $ids[] = $uid;
+    sort($ids);
+    set_setting('hide_own_time', implode(',', $ids));
+    audit('own_time', 'users', $uid, null, ['hide_own_time' => in_array($uid, $ids, true)], 'Eigene Zeiterfassung ' . (in_array($uid, $ids, true) ? 'ausgeblendet' : 'eingeblendet'));
+}
+
+function own_time_account_view(): void {
+    if (!admin()) return;
+    echo '<section class="card narrow"><h2>Eigene Zeiterfassung</h2><p class="muted">Für Administratoren, die selbst keine Arbeitszeiten erfassen: Die Übersicht zeigt dann nur Team-Informationen, und Sie erscheinen nicht in der Stundenübersicht (außer bei „Auch inaktive anzeigen“). Bestehende Daten bleiben erhalten.</p>';
+    form_start('own_time');
+    echo '<label class="check"><input type="checkbox" name="hide_own_time" value="1" ' . (own_time_hidden() ? 'checked' : '') . '> Eigene Zeiterfassung ausblenden</label>';
+    submit('Speichern');
+    echo '</section>';
 }

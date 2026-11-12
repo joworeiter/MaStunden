@@ -11,6 +11,8 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 | Außer Haus | Pro Mitarbeiter erlaubbar: Stempeln ohne QR, Arbeitsblock wird als „Außer Haus“ gekennzeichnet (Übersicht, Eintrag, Monatszettel, PDF, CSV). Stempel-Vermerke kann nur ein Admin ändern. |
 | Formular | „Arbeitszeit nachtragen“ behält die Eingaben nach einem Fehler |
 | Stundenübersicht | Admin-Ansicht (Verwaltung → Stundenübersicht): alle Mitarbeiter mit Wochensoll, Saldo bis gestern / inkl. heute, Resturlaub, Status |
+| Deutsches Datum | Datumsangaben in Ansichten, Monatszettel, PDF und CSV als TT.MM.JJJJ bzw. „Oktober 2026“ |
+| Eigene Zeiterfassung ausblenden | Mein Konto (nur Admins): Übersicht zeigt nur Team-Infos, Admin erscheint nicht in der Stundenübersicht |
 
 ## QR-Stempeln
 
