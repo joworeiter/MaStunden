@@ -30,7 +30,7 @@ function go(string $url='index.php'): never { header('Location: '.$url, true,303
 function flash(string $s): void { $_SESSION['flash']=$s; }
 function clean_audit(?array $data): ?array { if($data===null)return null; foreach(['password','storage_name','recovery_hash'] as $k) unset($data[$k]); return $data; }
 function audit(string $action,string $entity,?int $id,?array $before=null,?array $after=null,string $reason=''): void { insert('audit',['actor_id'=>user()['id']??null,'action'=>$action,'entity'=>$entity,'entity_id'=>$id,'before_json'=>$before?json_encode(clean_audit($before),JSON_UNESCAPED_UNICODE):null,'after_json'=>$after?json_encode(clean_audit($after),JSON_UNESCAPED_UNICODE):null,'reason'=>$reason,'created_at'=>now()]); }
-function notify(int $uid,string $text): void { insert('notifications',['user_id'=>$uid,'message'=>$text,'created_at'=>now()]); }
+function notify(int $uid,string $text): void { insert('notifications',['user_id'=>$uid,'message'=>$text,'created_at'=>now()]); if(function_exists('mail_queue'))mail_queue($uid,$text); }
 function notify_admins(string $text): void { foreach(rows('users',"role='admin' AND active=1") as $u) notify((int)$u['id'],$text); }
 function post(string $k,string $default=''): string { return trim((string)($_POST[$k]??$default)); }
 function bounded(string $v,int $max): string { if(mb_strlen($v)>$max) fail('Die Eingabe ist zu lang (maximal '.$max.' Zeichen).'); return $v; }

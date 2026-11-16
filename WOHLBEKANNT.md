@@ -14,6 +14,16 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 | Deutsches Datum | Datumsangaben in Ansichten, Monatszettel, PDF und CSV als TT.MM.JJJJ bzw. „Oktober 2026“ |
 | Eigene Zeiterfassung ausblenden | Mein Konto (nur Admins): Übersicht zeigt nur Team-Infos, Admin erscheint nicht in der Stundenübersicht |
 
+| Kleinigkeiten | Eingaben bleiben nach Fehler beim Nachtragen erhalten, Datumsangaben im Format TT.MM.JJJJ |
+| Stundenübersicht | Admin-Ansicht aller Mitarbeiter mit Saldo und Resturlaub; Admins können die eigene Zeiterfassung ausblenden (Mein Konto) |
+| E-Mail | Benachrichtigungen zusätzlich per E-Mail (Anträge, Freigaben, Monatsabschluss). Pro Person in „Mein Konto“ abbestellbar |
+
+## E-Mail-Benachrichtigungen
+
+- Aktivieren unter **Unternehmen → E-Mail-Benachrichtigungen**, Absender-Adresse muss beim Hoster existieren (z. B. `zeit@wohlbekannt.at`). Mit „Test-E-Mail senden“ prüfen.
+- Versand über PHP `mail()` erst nach erfolgreichem Speichern. Fehler landen im Fehlerprotokoll des geschützten Speichers.
+- Jeder kann E-Mails unter **Mein Konto** abbestellen; die Hinweise in der App bleiben.
+
 ## QR-Stempeln
 
 - Aktivieren unter **Unternehmen → QR-Stempeln**. Dort werden Standorte gepflegt und die Bildschirm-Links angezeigt.
