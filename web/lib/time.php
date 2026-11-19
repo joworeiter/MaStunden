@@ -69,5 +69,5 @@ function vacation(int $uid,int $year): array {
 function auto_break(array &$r,array $entries,int $from,int $to): void {
  $need=(int)setting('pause_short','30');if($r['work']<=360||$r['break']>0||$need<=0)return;
  $prev=null;foreach($entries as $e){$ea=strtotime($e['start_at'].' UTC');$eb=strtotime(($e['end_at']??now()).' UTC');if($ea>=$to||$eb<=$from)continue;$ea=max($ea,$from);$eb=min($eb,$to);if($prev!==null&&$ea-$prev>=$need*60){$r['gap_break']=true;return;}$prev=max($prev??$eb,$eb);}
- $r['break']+=$need;$r['auto_break']=$need;$r['label'].=($r['label']?' · ':'').'Pause bezahlt (autom.)';
+ $r['break']+=$need;$r['auto_break']=$need;$r['label'].=($r['label']?' · ':'').'Pause (auto.)';
 }

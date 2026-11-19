@@ -28,7 +28,7 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 ## Automatische Pause
 
 - Gilt pro Tag: Ist-Zeit über 6 Std., keine Pause gestempelt und keine Lücke von mind. 30 Min. zwischen zwei Blöcken → 30 Min. Pause gelten als genommen und bezahlt.
-- Die Ist-Zeit wird nicht gekürzt (10 Std. anwesend = 10 Std. Ist, davon 30 Min. Pause). Ausweis in Spalte „Pause“ und Hinweis „Pause bezahlt (autom.)“ in Übersicht, Monatszettel, PDF und CSV.
+- Die Ist-Zeit wird nicht gekürzt (10 Std. anwesend = 10 Std. Ist, davon 30 Min. Pause). Ausweis in Spalte „Pause“ und Hinweis „Pause (auto.)“ in Übersicht, Monatszettel, PDF und CSV.
 - Wird eine Pause gestempelt, gilt nur diese (kürzer als 30 Min. → Hinweis „Pause prüfen“).
 - Dauer = Einstellung „Pausenhinweis nach mehr als 6 Std.“. Code: `auto_break()` in `web/lib/time.php`.
 
