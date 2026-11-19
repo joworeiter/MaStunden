@@ -39,10 +39,11 @@ function month_report(int $uid,string $month,bool $snapshot=true): array {
   if(isset($holiday[$day]))$r['credit']=$r['target'];
   foreach($abs as $a)if($a['start_date']<=$day&&$a['end_date']>=$day){$r['label'].=($r['label']?' · ':'').['vacation'=>'Urlaub','sick'=>'Krankheit','comp'=>'Freizeitausgleich','other'=>setting('other_absence_label','Sonstige Abwesenheit')][$a['type']];if($a['type']!=='comp'&&($a['type']!=='other'||setting('other_absence_paid','1')==='1')&&!isset($holiday[$day]))$r['credit']+=(int)($a['amount_minutes']??0)>0?(int)$a['amount_minutes']:(int)round($r['target']*(float)$a['fraction']);}
   foreach($entries as $e){$ea=strtotime($e['start_at'].' UTC');$eb=strtotime(($e['end_at']??now()).' UTC');if($ea<$next->getTimestamp()&&$eb>$d->getTimestamp()){$m=work_minutes($e,$d->getTimestamp(),$next->getTimestamp());$gross=(int)floor((min($eb,$next->getTimestamp())-max($ea,$d->getTimestamp()))/60);$r['work']+=$m;$r['break']+=$gross-$m;$r['blocks'][]=(new DateTimeImmutable('@'.max($ea,$d->getTimestamp())))->setTimezone(tz())->format('H:i').'–'.($eb>=$next->getTimestamp()?'24:00':($e['end_at']?local_time($e['end_at'],'H:i'):'läuft')).qr_block_suffix($e['note']??null);if(!$e['end_at'])$r['warnings'][]='Laufender Eintrag';}}
+  auto_break($r,$entries,$d->getTimestamp(),$next->getTimestamp());
   $r['credit']=min($r['credit'],$r['target']);$r['balance']=$r['work']+$r['credit']-$r['target'];
   if($day<today()&&$r['target']>0&&$r['work']+$r['credit']===0&&$r['label']==='')$r['warnings'][]='Eintrag fehlt';
   if($r['work']>(int)setting('max_daily','600'))$r['warnings'][]='Lange Arbeitszeit';
-  $required=$r['work']>540?(int)setting('pause_long','45'):($r['work']>360?(int)setting('pause_short','30'):0);if($r['break']<$required)$r['warnings'][]='Pause prüfen';
+  $required=$r['work']>540?(int)setting('pause_long','45'):($r['work']>360?(int)setting('pause_short','30'):0);if($r['break']<$required&&empty($r['gap_break']))$r['warnings'][]='Pause prüfen';
   foreach($sum as $k=>$_)$sum[$k]+=$r[$k];$days[]=$r;
  }
  $previous=null;foreach($entries as $e){if($previous&&local_time($previous,'Y-m-d')!==local_time($e['start_at'],'Y-m-d')&&strtotime($e['start_at'].' UTC')-strtotime($previous.' UTC')<(int)setting('rest_hours','11')*3600){foreach($days as &$r)if($r['day']===local_time($e['start_at'],'Y-m-d'))$r['warnings'][]='Ruhezeit prüfen';unset($r);}if($e['end_at'])$previous=$e['end_at'];}
@@ -60,4 +61,13 @@ function vacation(int $uid,int $year): array {
  foreach(rows('absences',"user_id=? AND type='vacation' AND status IN ('approved','pending') AND start_date<=? AND end_date>=?",[$uid,"$year-12-31","$year-01-01"]) as $a)foreach(days(max($a['start_date'],"$year-01-01"),min($a['end_date'],"$year-12-31")) as $d)if(scheduled($uid,$d)>0&&!one('holidays','day=?',[$d])){if($a['status']==='approved')$used+=(int)($a['amount_minutes']??0)>0?(int)$a['amount_minutes']/scheduled($uid,$d):(float)$a['fraction'];else $pending+=(int)($a['amount_minutes']??0)>0?(int)$a['amount_minutes']/scheduled($uid,$d):(float)$a['fraction'];}
  $adjust=(float)q('SELECT COALESCE(SUM(vacation),0) FROM '.table('adjustments').' WHERE user_id=? AND day BETWEEN ? AND ?',[$uid,"$year-01-01","$year-12-31"])->fetchColumn();
  return ['entitlement'=>(float)$u['vacation_days']+$adjust,'used'=>round($used,2),'pending'=>round($pending,2),'remaining'=>round((float)$u['vacation_days']+$adjust-$used,2)];
+}
+
+/* wohlbekannt: Wird an einem Tag mit mehr als 6 Std. keine Pause gestempelt (und liegt keine
+   Unterbrechung von mind. 30 Min. zwischen zwei Blöcken), gilt eine bezahlte Pause von 30 Min.
+   als genommen. Die Arbeitszeit bleibt unverändert, die Pause wird nur ausgewiesen. */
+function auto_break(array &$r,array $entries,int $from,int $to): void {
+ $need=(int)setting('pause_short','30');if($r['work']<=360||$r['break']>0||$need<=0)return;
+ $prev=null;foreach($entries as $e){$ea=strtotime($e['start_at'].' UTC');$eb=strtotime(($e['end_at']??now()).' UTC');if($ea>=$to||$eb<=$from)continue;$ea=max($ea,$from);$eb=min($eb,$to);if($prev!==null&&$ea-$prev>=$need*60){$r['gap_break']=true;return;}$prev=max($prev??$eb,$eb);}
+ $r['break']+=$need;$r['auto_break']=$need;$r['label'].=($r['label']?' · ':'').'Pause bezahlt (autom.)';
 }

@@ -16,6 +16,7 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 
 | Kleinigkeiten | Eingaben bleiben nach Fehler beim Nachtragen erhalten, Datumsangaben im Format TT.MM.JJJJ |
 | Stundenübersicht | Admin-Ansicht aller Mitarbeiter mit Saldo und Resturlaub; Admins können die eigene Zeiterfassung ausblenden (Mein Konto) |
+| Auto-Pause | Mehr als 6 Std. am Tag ohne gestempelte Pause: 30 Min. bezahlte Pause werden automatisch ausgewiesen, Ist-Zeit bleibt gleich |
 | E-Mail | Benachrichtigungen zusätzlich per E-Mail (Anträge, Freigaben, Monatsabschluss). Pro Person in „Mein Konto“ abbestellbar |
 
 ## E-Mail-Benachrichtigungen
@@ -23,6 +24,13 @@ Branch `wohlbekannt` = Upstream-Release + diese Anpassungen:
 - Aktivieren unter **Unternehmen → E-Mail-Benachrichtigungen**, Absender-Adresse muss beim Hoster existieren (z. B. `zeit@wohlbekannt.at`). Mit „Test-E-Mail senden“ prüfen.
 - Versand über PHP `mail()` erst nach erfolgreichem Speichern. Fehler landen im Fehlerprotokoll des geschützten Speichers.
 - Jeder kann E-Mails unter **Mein Konto** abbestellen; die Hinweise in der App bleiben.
+
+## Automatische Pause
+
+- Gilt pro Tag: Ist-Zeit über 6 Std., keine Pause gestempelt und keine Lücke von mind. 30 Min. zwischen zwei Blöcken → 30 Min. Pause gelten als genommen und bezahlt.
+- Die Ist-Zeit wird nicht gekürzt (10 Std. anwesend = 10 Std. Ist, davon 30 Min. Pause). Ausweis in Spalte „Pause“ und Hinweis „Pause bezahlt (autom.)“ in Übersicht, Monatszettel, PDF und CSV.
+- Wird eine Pause gestempelt, gilt nur diese (kürzer als 30 Min. → Hinweis „Pause prüfen“).
+- Dauer = Einstellung „Pausenhinweis nach mehr als 6 Std.“. Code: `auto_break()` in `web/lib/time.php`.
 
 ## QR-Stempeln
 
